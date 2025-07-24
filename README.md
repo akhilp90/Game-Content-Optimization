@@ -15,7 +15,7 @@ The goal is to simulate a **cold start** scenario for a new player and recommend
 ---
 
 ## 📂 Dataset Description
-
+ 
 The dataset consists of 10,000 gameplay records with the following structure:
 
 | Column Name             | Description                                         |
