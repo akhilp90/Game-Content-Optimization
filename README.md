@@ -319,13 +319,13 @@ While NCF personalizes based on historical data, RL dynamically adapts in real-t
 Together, they provide both cold-start personalization and adaptive session flow.
 
 ### 🛠 Future Improvements
-Integrate real gameplay telemetry (from actual player logs)
+Integrate real gameplay telemetry (from actual player logs).
 
-Use more complex environments (multi-step level chains, special events)
+Use more complex environments (multi-step level chains, special events).
 
-Integrate player mood/emotion estimation as part of state
+Integrate player mood/emotion estimation as part of state.
 
-Implement Multi-Armed Bandit models for faster deployment decisions
+Implement Multi-Armed Bandit models for faster deployment decisions.
 
 
 
