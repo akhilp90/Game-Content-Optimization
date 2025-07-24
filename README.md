@@ -42,8 +42,8 @@ The dataset consists of 10,000 gameplay records with the following structure:
 
 ## 🔍 Methodology
 
-1. 🧠 Player Skill Clustering
-Goal: Group players into skill categories based on how they interact with game levels.
+## 1. 🧠 Player Skill Clustering 
+**Goal: Group players into skill categories based on how they interact with game levels.**
 
 How it works:
 
@@ -59,8 +59,8 @@ Beginners typically have low success rates, more retries, and longer time spent.
 
 Experts succeed quickly, often on the first attempt, and spend less time per level.
 
-2. 🎮 Level Difficulty Classification
-Goal: Determine how hard each level is, based on aggregated player performance.
+## 2. 🎮 Level Difficulty Classification
+**Goal: Determine how hard each level is, based on aggregated player performance.**
 
 How it works:
 
@@ -74,8 +74,8 @@ Easy levels have high completion and first-attempt success rates.
 
 Hard levels are often rage-quit and require more retries and time.
 
-3. 🧩 Feature Engineering
-Goal: Prepare a clean dataset for collaborative filtering.
+## 3. 🧩 Feature Engineering
+**Goal: Prepare a clean dataset for collaborative filtering.**
 
 Steps:
 
@@ -87,8 +87,8 @@ Transformed categorical features like boosters used and rage quit into binary fo
 
 Final dataset columns include player_id, level_id, player_skill, level_difficulty, and engagement features.
 
-4. 🔁 Neural Collaborative Filtering (NCF) – Personalized Recommendation
-Goal: Recommend levels tailored to a specific player's inferred skill and preferences.
+## 4. 🔁 Neural Collaborative Filtering (NCF) – Personalized Recommendation
+**Goal: Recommend levels tailored to a specific player's inferred skill and preferences.**
 
 How it works:
 
@@ -108,7 +108,7 @@ Based on those outcomes, the player is clustered into a skill level.
 
 The model then recommends levels that had the highest success and engagement scores for similar players.
 
-5. 🧪 Evaluation & Results
+## 5. 🧪 Evaluation & Results
 Evaluation Metrics:
 
 Precision@K: How many of the top K recommended levels were actually suitable.
@@ -125,7 +125,7 @@ Good coverage ensures the system isn't biased toward a small subset of levels.
 
 Personalized recommendations outperform random or popularity-based baselines.
 
-6. 🧠 Why This Works
+## 6. 🧠 Why This Works
 Traditional recommender systems don’t account for player learning curves or skill progression.
 
 Our system blends unsupervised clustering with deep learning to adaptively recommend levels, especially useful in dynamic gaming environments where content is frequently updated.
