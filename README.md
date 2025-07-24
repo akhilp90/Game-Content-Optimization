@@ -216,6 +216,117 @@ Our system blends unsupervised clustering with deep learning to adaptively recom
 
 Even new users can be accurately served after just a few rounds of gameplay.
 
+## 7. 🤖 Reinforcement Learning Agent for Adaptive Level Recommendation
+
+### 🎯 Objective
+
+To further personalize level recommendations, we implement a **Deep Q-Network (DQN)**-based **reinforcement learning (RL)** agent that dynamically learns which levels to recommend based on a player’s ongoing performance and behavior over time.
+
+This goes beyond static recommendations — now the system **learns from player interaction**, updating its strategy to keep engagement high and frustration low.
+
+---
+
+### 🧠 Environment Setup
+
+We define a custom environment `CandyCrushEnv` that simulates:
+
+- Player skill changes over time
+- Level difficulty
+- Win probability as a function of skill and level
+- Behavioral factors like retries, boosters used, stars earned, and time spent
+
+Each **state** includes:
+
+- `player_skill`: Current skill level of the player
+- `level_difficulty`: The difficulty of the selected level
+- `boosters_used`: Whether boosters were used
+- `win_prob`: System’s predicted win probability
+- `num_retries`: Number of retries taken
+- `avg_time`: Average time spent on the level
+- `stars_earned`: Stars earned (1–3)
+- `level_normalized`: Normalized ID of the level
+
+The **action** is choosing a level to recommend.
+
+---
+
+### 🧮 Reward Function
+
+The reward is carefully shaped to balance success, challenge, and engagement:
+
+```python
+reward = (
+    3 * stars_earned +        # Bonus for engagement
+    2 * int(level_completed) -# Bonus for completion
+    0.7 * num_retries -       # Penalty for too many retries
+    0.5 * boosters_used -     # Penalty for over-reliance on boosters
+    0.1 * (avg_time / 60)     # Mild penalty for long session time
+)
+```  
+
+ ###🧱 DQN Architecture
+A deep neural network is used as the Q-function approximator. Architecture:
+
+Input: 8-dimensional state vector
+
+Hidden Layers: [256 → 128 → 64] with ReLU activations
+
+Output: Q-values for 50 possible levels
+
+Uses Double DQN to reduce overestimation bias.
+
+### ⚙️ Agent Mechanics
+The RL agent handles:
+
+Action Selection: ε-greedy strategy to balance exploration & exploitation
+
+Experience Replay: Stores gameplay samples to train on batches
+
+Target Network: A slowly updated copy of the main model for stability
+
+Training Loop: Backpropagates Bellman error and updates Q-values
+
+Key Hyperparameters:
+
+γ = 0.97 (discount factor)
+
+ε = 1.0 → 0.01 (exploration decay)
+
+LR = 0.0005, batch_size = 64
+
+### 📊 Training & Evaluation
+The agent is trained over 500 episodes, simulating player sessions. Key plots:
+
+📈 Rewards per Episode: Indicates whether agent is recommending better over time
+
+🔻 Epsilon Decay: Shows the agent learning to exploit more over time
+
+Example training output:
+
+python-repl
+Copy
+Edit
+Episode 50/500 - Reward: 12.5 - Epsilon: 0.6043
+...
+Episode 500/500 - Reward: 24.3 - Epsilon: 0.0100
+### 🧠 Why RL?
+While NCF personalizes based on historical data, RL dynamically adapts in real-time to a player's skill changes and reactions to previous levels.
+
+📊 NCF = Offline prediction based on past interactions
+
+🤖 RL = Online decision-making based on sequential player behavior
+
+Together, they provide both cold-start personalization and adaptive session flow.
+
+### 🛠 Future Improvements
+Integrate real gameplay telemetry (from actual player logs)
+
+Use more complex environments (multi-step level chains, special events)
+
+Integrate player mood/emotion estimation as part of state
+
+Implement Multi-Armed Bandit models for faster deployment decisions
+
 
 
 
