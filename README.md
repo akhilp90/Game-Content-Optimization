@@ -88,25 +88,109 @@ Transformed categorical features like boosters used and rage quit into binary fo
 Final dataset columns include player_id, level_id, player_skill, level_difficulty, and engagement features.
 
 ## 4. 🔁 Neural Collaborative Filtering (NCF) – Personalized Recommendation
-**Goal: Recommend levels tailored to a specific player's inferred skill and preferences.**
 
-How it works:
+### 🎯 Objective
 
-We frame the problem as a binary recommendation task, where the model learns to predict whether a player would successfully engage with a level.
+Recommend game levels that align with a player's skill and behavioral patterns using deep learning-based collaborative filtering.
 
-Player and level IDs are encoded and passed through embedding layers.
+---
 
-A neural network is trained on these embeddings along with interaction features like skill level, difficulty level, retries, boosters, etc.
+### 🧠 What is NCF?
 
-The model learns latent patterns in how different player profiles interact with levels.
+Neural Collaborative Filtering (NCF) is a deep learning-based recommendation algorithm that learns non-linear interaction patterns between users (players) and items (game levels). Unlike traditional matrix factorization, NCF uses neural networks to capture complex user-item interactions.
 
-For a new user:
+---
 
-We simulate a few early games.
+### ⚙️ How Our NCF Works
 
-Based on those outcomes, the player is clustered into a skill level.
+#### 1. **Framing the Problem**
 
-The model then recommends levels that had the highest success and engagement scores for similar players.
+* **Type**: Multiclass recommendation task.
+* **Goal**: Predict the engagement quality between a player and a level, which is later used to recommend the most appropriate levels.
+* **Labeling**:
+
+  * **0** → Easy win (completed quickly)
+  * **1** → Ideal engagement (balanced effort and success)
+  * **2** → Rage quit / Overwhelmed
+
+This label acts as a **proxy signal** to help the model rank levels based on engagement suitability rather than pure classification.
+
+---
+
+#### 2. **Feature Preparation**
+
+* **Categorical Inputs**:
+
+  * `player_id` → Label encoded
+  * `level_id` → Label encoded
+
+* **Engagement Labeling Rule**:
+
+  * Label is determined using rules based on `success`, `rage_quit`, `attempts`, and `time_spent_sec`
+
+---
+
+#### 3. **Model Architecture**
+
+* **Embedding Layers**:
+
+  * `player_id` and `level_id` are each passed through embedding layers to learn dense vector representations.
+
+* **Concatenation**:
+
+  * Player and level embeddings are concatenated.
+
+* **Neural Network**:
+
+  * Dense Layer 1 → ReLU activation → Dropout
+  * Dense Layer 2 → ReLU activation → Dropout
+  * Output Layer → 3 logits (softmax for class probabilities: \[easy win, ideal, rage quit])
+
+---
+
+#### 4. **Training Setup**
+
+* **Loss Function**: CrossEntropyLoss (because of multi-class labels)
+* **Optimizer**: Adam
+* **Evaluation Metric**: Loss during training; precision and coverage used for recommendations
+
+---
+
+#### 5. **Cold Start Handling for New Players**
+
+1. A new player plays 2–3 tutorial levels.
+2. Their gameplay is recorded (`success`, `time_spent`, `retries`, etc.).
+3. Their **engagement label** is predicted using rules.
+4. Based on mode of those labels, their **inferred skill** (Beginner/Intermediate/Advanced) is derived.
+5. Average player embedding of users with similar skill class is computed.
+6. This embedding is assigned to the new user.
+7. The model scores all levels for this user.
+8. Top-N levels with highest `ideal engagement` score (class `1`) are recommended.
+
+---
+
+### 📈 Example Flow for New User
+
+```python
+simulate_gameplay(new_player)
+→ collect_stats()
+→ infer_engagement_label()
+→ assign_skill_class()
+→ average_similar_user_embeddings(skill_class)
+→ embed_new_user()
+→ for each level:
+    predict_engagement_score()
+→ sort levels by class-1 probability
+→ return top_k_levels()
+```
+
+This approach ensures that recommendations are not just based on difficulty but on what historically led to **meaningful engagement** for similar players.
+
+---
+
+Let me know if you want the evaluation section converted next or visual aids added to the README!
+
+
 
 ## 5. 🧪 Evaluation & Results
 Evaluation Metrics:
