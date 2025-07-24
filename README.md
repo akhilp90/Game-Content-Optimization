@@ -42,159 +42,96 @@ The dataset consists of 10,000 gameplay records with the following structure:
 
 ## 🔍 Methodology
 
-### 1. 🎯 Player Skill Clustering
+1. 🧠 Player Skill Clustering
+Goal: Group players into skill categories based on how they interact with game levels.
 
-**Goal:** Categorize players into `Beginner`, `Intermediate`, and `Expert` clusters based on play behavior.
+How it works:
 
-#### ➤ Features Used:
-- `attempts`, `success`, `first_attempt_success`, `time_spent_sec`
+We first aggregate gameplay behavior for each player by computing averages of key metrics like number of attempts, success rate, first-attempt success rate, and time spent.
 
-#### ➤ Steps:
-```python
-from sklearn.preprocessing import StandardScaler
-from sklearn.cluster import KMeans
+These aggregated features are then normalized using standard scaling, so no single feature dominates the clustering process due to scale.
 
-# Aggregating player behavior
-player_stats = df.groupby("player_id")[["attempts", "success", "first_attempt_success", "time_spent_sec"]].mean()
+We use KMeans clustering with 3 clusters, assuming players generally fall into three intuitive skill levels: Beginner, Intermediate, and Expert.
 
-# Normalization
-scaler = StandardScaler()
-scaled_stats = scaler.fit_transform(player_stats)
+Once clustered, we analyze the average stats per cluster to interpret and assign each cluster a human-readable label. For instance:
 
-# Clustering players
-kmeans = KMeans(n_clusters=3, random_state=42)
-player_clusters = kmeans.fit_predict(scaled_stats)
+Beginners typically have low success rates, more retries, and longer time spent.
 
-# Mapping to skill levels
-cluster_map = {0: "Beginner", 1: "Intermediate", 2: "Expert"}
-player_stats['skill_level'] = [cluster_map[c] for c in player_clusters]
-```
+Experts succeed quickly, often on the first attempt, and spend less time per level.
 
----
+2. 🎮 Level Difficulty Classification
+Goal: Determine how hard each level is, based on aggregated player performance.
 
-### 2. 🧩 Level Difficulty Classification
+How it works:
 
-**Goal:** Classify game levels based on difficulty using success rate and time metrics.
+We aggregate player-level interactions for each level: success rates, average attempts, average time spent, retry counts, and rage quits.
 
-#### ➤ Features Used:
-- `success`, `first_attempt_success`, `avg_time_per_attempt`, `num_retries`
+Similar to player clustering, we apply KMeans (with 3 clusters) to categorize levels into Easy, Medium, and Hard.
 
-#### ➤ Steps:
-```python
-level_stats = df.groupby("level_id")[["success", "first_attempt_success", "avg_time_per_attempt", "num_retries"]].mean()
+The clusters are labeled based on statistical characteristics:
 
-# Normalization
-scaled_levels = scaler.fit_transform(level_stats)
+Easy levels have high completion and first-attempt success rates.
 
-# Clustering levels by difficulty
-level_clusters = KMeans(n_clusters=3, random_state=42).fit_predict(scaled_levels)
+Hard levels are often rage-quit and require more retries and time.
 
-# Mapping to difficulty labels
-difficulty_map = {0: "Easy", 1: "Medium", 2: "Hard"}
-level_stats["difficulty"] = [difficulty_map[c] for c in level_clusters]
-```
+3. 🧩 Feature Engineering
+Goal: Prepare a clean dataset for collaborative filtering.
 
----
+Steps:
 
-### 3. 🧠 Personalized Recommendations using Neural Collaborative Filtering (NCF)
+Merged the player skill clusters and level difficulty clusters into the main dataset.
 
-**Goal:** Train a deep learning model to predict player-level interactions.
+Cleaned missing values in moves_used and avg_moves_per_attempt using mean imputation.
 
-#### ➤ Model: PyTorch-based Neural Collaborative Filtering
+Transformed categorical features like boosters used and rage quit into binary form.
 
-```python
-import torch
-import torch.nn as nn
+Final dataset columns include player_id, level_id, player_skill, level_difficulty, and engagement features.
 
-class NCF(nn.Module):
-    def __init__(self, num_players, num_levels, embedding_dim=32):
-        super().__init__()
-        self.player_embed = nn.Embedding(num_players, embedding_dim)
-        self.level_embed = nn.Embedding(num_levels, embedding_dim)
-        self.fc_layers = nn.Sequential(
-            nn.Linear(embedding_dim * 2, 64),
-            nn.ReLU(),
-            nn.Linear(64, 16),
-            nn.ReLU(),
-            nn.Linear(16, 1),
-            nn.Sigmoid()
-        )
+4. 🔁 Neural Collaborative Filtering (NCF) – Personalized Recommendation
+Goal: Recommend levels tailored to a specific player's inferred skill and preferences.
 
-    def forward(self, player_ids, level_ids):
-        player_vecs = self.player_embed(player_ids)
-        level_vecs = self.level_embed(level_ids)
-        x = torch.cat([player_vecs, level_vecs], dim=1)
-        return self.fc_layers(x).squeeze()
-```
+How it works:
 
-#### ➤ Training:
-```python
-# Convert player_id and level_id to indices
-train_loader = DataLoader(train_dataset, batch_size=64, shuffle=True)
-model = NCF(num_players, num_levels)
-optimizer = torch.optim.Adam(model.parameters(), lr=0.001)
-loss_fn = nn.BCELoss()
+We frame the problem as a binary recommendation task, where the model learns to predict whether a player would successfully engage with a level.
 
-for epoch in range(5):
-    for player_ids, level_ids, labels in train_loader:
-        optimizer.zero_grad()
-        outputs = model(player_ids, level_ids)
-        loss = loss_fn(outputs, labels.float())
-        loss.backward()
-        optimizer.step()
-```
+Player and level IDs are encoded and passed through embedding layers.
 
----
+A neural network is trained on these embeddings along with interaction features like skill level, difficulty level, retries, boosters, etc.
 
-## 🧪 Cold Start Simulation (New User Recommendation)
+The model learns latent patterns in how different player profiles interact with levels.
 
-When a **new player** starts, simulate initial 3-5 levels to determine their behavioral pattern.
+For a new user:
 
-- Feed simulated stats into the clustering model to get their skill level.
-- Filter levels with matching difficulty class.
-- Use NCF model to rank top-N levels by predicted engagement score.
+We simulate a few early games.
 
----
+Based on those outcomes, the player is clustered into a skill level.
 
-## 📊 Evaluation
+The model then recommends levels that had the highest success and engagement scores for similar players.
 
-- NCF achieved **~92% accuracy** in predicting successful player-level interaction.
-- Skill-level prediction accuracy: **>90% match with manual labels**
-- Cold start recommendation success rate: **~85% engagement** in simulated new users
+5. 🧪 Evaluation & Results
+Evaluation Metrics:
 
----
+Precision@K: How many of the top K recommended levels were actually suitable.
 
-## 🚀 Future Improvements
+Coverage: Diversity of levels being recommended across players.
 
-- Use attention-based models (like DeepFM or Transformer layers) to enhance NCF.
-- Incorporate time-series patterns for session-based personalization.
-- Real-time A/B testing with live player feedback (in real games).
+Hit Ratio: Whether at least one successful level is in the top-K predictions.
 
----
+Observations:
 
-## 🧠 Tech Stack
+High precision indicates the model recommends well-suited levels.
 
-- Python, Pandas, Scikit-learn
-- PyTorch
-- Matplotlib, Seaborn
-- Jupyter Notebooks
+Good coverage ensures the system isn't biased toward a small subset of levels.
 
----
+Personalized recommendations outperform random or popularity-based baselines.
 
-## 📎 References
+6. 🧠 Why This Works
+Traditional recommender systems don’t account for player learning curves or skill progression.
 
-- Neural Collaborative Filtering: [He et al., 2017](https://arxiv.org/abs/1708.05031)
-- KMeans Clustering - Scikit-learn Documentation
-- Dataset simulated for academic research
+Our system blends unsupervised clustering with deep learning to adaptively recommend levels, especially useful in dynamic gaming environments where content is frequently updated.
 
----
+Even new users can be accurately served after just a few rounds of gameplay.
 
-## 🧑‍💻 Author
-
-**Your Name**  
-[LinkedIn](https://linkedin.com/in/your-profile) | [Portfolio](https://yourportfolio.com)
-
----
 
 
 
