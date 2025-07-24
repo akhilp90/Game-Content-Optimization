@@ -296,7 +296,7 @@ LR = 0.0005, batch_size = 64
 ### 📊 Training & Evaluation
 The agent is trained over 500 episodes, simulating player sessions. Key plots:
 
-📈 Rewards per Episode: Indicates whether agent is recommending better over time
+📈 Rewards per Episode: Indicates whether agent is recommending better over time.The agent improved over time, as seen by increasing rewards ( from 98.05 to 144.39)
 
 🔻 Epsilon Decay: Shows the agent learning to exploit more over time
 
