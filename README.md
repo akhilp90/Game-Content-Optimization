@@ -188,7 +188,6 @@ This approach ensures that recommendations are not just based on difficulty but 
 
 ---
 
-Let me know if you want the evaluation section converted next or visual aids added to the README!
 
 
 
