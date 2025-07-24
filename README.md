@@ -264,7 +264,7 @@ reward = (
 )
 ```  
 
- ###🧱 DQN Architecture
+ ### 🧱 DQN Architecture
 A deep neural network is used as the Q-function approximator. Architecture:
 
 Input: 8-dimensional state vector
