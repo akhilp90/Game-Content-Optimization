@@ -4,7 +4,7 @@
 
 This project aims to personalize the **game level recommendation** experience for players based on their behavior and skill level.
 
-The system works in **three stages**:
+The system works in **three stages**: 
 
 1. **Player Skill Clustering** using behavioral statistics
 2. **Level Difficulty Classification**
